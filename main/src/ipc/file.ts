@@ -55,6 +55,7 @@ interface FileDeleteRequest {
   sessionId: string;
   filePath: string;
   useTrash?: boolean;
+  allowPermanentFallback?: boolean;
 }
 
 interface FileRenameRequest {
@@ -722,6 +723,12 @@ export function registerFileHandlers(ipcMain: IpcMain, services: AppServices): v
           await shell.trashItem(fullPath);
           return { success: true };
         } catch (trashError) {
+          if (request.allowPermanentFallback === false) {
+            return {
+              success: false,
+              error: trashError instanceof Error ? trashError.message : 'Failed to move item to trash'
+            };
+          }
           console.warn('Failed to move item to trash, permanently deleting instead:', trashError);
         }
       }
